@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Click Coordinates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Click on the Canvas</h1>
+<p>Coordinates: <span id="coords"></span></p>
+<p>Click Count: <span id="click-count">0</span></p>
+
+<canvas id="mapCanvas" width="500" height="500"></canvas>
+<button type="submit" onclick="startFunction()"> Submit</button>
+<p id="result"></p>
+
+<script>
+    const canvas = document.getElementById('mapCanvas');
+    const ctx = canvas.getContext('2d');
+    const coordsDisplay = document.getElementById('coords');
+    const clickCountDisplay = document.getElementById('click-count');
+    const backgroundImage = new Image();
+    //backgroundImage.src = 'C:\Users\anind\Downloads\AI Proj\assets\barca_map.png';
+    backgroundImage.onload = function() {
+        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+    }
+
+    let clickCount = 0;
+
+    // Function to convert canvas coordinates to latitude and longitude
+    function getCoordinates(x, y, width, height) {
+        const invertedY = height - y;
+        const latitude = 40 + ((41 - 40) * invertedY / height);
+        const longitude = -74 + ((-73 - -74) * x / width);
+        //const longitude = -73 + ((-74 - -73) * x / width);
+        return { latitude, longitude };
+    }
+
+    // Function to send coordinates to the server via POST
+    function sendCoordinatesToServer(latitude, longitude, clickCount) {
+        fetch('/submit_coordinates', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ latitude, longitude, clickCount })
+        })
+        .then(response => response.json())
+        .then(data => console.log(data.message))
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Event listener for canvas click
+    canvas.addEventListener('click', function(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        const { latitude, longitude } = getCoordinates(x, y, canvas.width, canvas.height);
+
+        // Increment click count
+        clickCount++;
+        clickCountDisplay.textContent = clickCount;
+
+        // Display the latitude and longitude
+        coordsDisplay.textContent = `Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`;
+        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+        // Optionally, draw a small dot at the clicked location on the canvas
+        ctx.fillStyle = 'red';
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Send the coordinates to the server
+        sendCoordinatesToServer(latitude, longitude, clickCount);
+    });
+
+    function startFunction() {
+            fetch('/start_function')
+                .then(response => response.json())
+                .then(data => {
+                    // Update the webpage with the returned message
+                    document.getElementById('result').innerHTML = data.message;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+</script>
+
+</body>
+</html>
