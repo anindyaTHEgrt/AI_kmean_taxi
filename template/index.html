@@ -39,8 +39,8 @@
     // Function to convert canvas coordinates to latitude and longitude
     function getCoordinates(x, y, width, height) {
         const invertedY = height - y;
-        const latitude = 40 + ((41 - 40) * invertedY / height);
-        const longitude = -74 + ((-73 - -74) * x / width);
+        const longitude = 40 + ((41 - 40) * invertedY / height);
+        const latitude = -74 + ((-73 - -74) * x / width);
         //const longitude = -73 + ((-74 - -73) * x / width);
         return { latitude, longitude };
     }
